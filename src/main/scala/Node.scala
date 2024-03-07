@@ -23,13 +23,13 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      // 在系统启动时执行的操作
      override def preStart(): Unit = {
-     // 显示创建信息
-     displayActor ! Message(s"Node $id is created")
-     // 启动子Actor
-     checkerActor ! Start
-     beatActor ! Start
-     // 初始化与其他节点的通信路径
-     initializeRemotes()
+          // 显示创建信息
+          displayActor ! Message(s"Node $id is created")
+          // 启动子Actor
+          checkerActor ! Start
+          beatActor ! Start
+          // 初始化与其他节点的通信路径
+          initializeRemotes()
      }
 
      def receive: Receive = {
