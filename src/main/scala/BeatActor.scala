@@ -17,7 +17,7 @@ case class LeaderChanged(nodeId: Int) // 领导者变更消息，直接使用Int
 class BeatActor(val id: Int) extends Actor {
      val beatInterval: FiniteDuration = 500.milliseconds // 定义心跳间隔
      val father = context.parent // 父Actor，用于发送消息
-     var leader: Int = 0 // 初始假设的领导者ID为0
+     var leader: Int = 0 // 初始无领导者
 
      override def preStart(): Unit = {
           // 初始化时触发首次心跳

@@ -7,11 +7,8 @@ case object Start
 
 // 存活消息类型
 sealed trait AliveMessage
-case class IsAlive(id: Int) extends AliveMessage
-case class IsAliveLeader(id: Int) extends AliveMessage
-
-case object CanIBeLeader // 询问是否可以成为领导者
-case class LeadershipResponse(canBeLeader: Boolean) // 对CanIBeLeader的响应
+case class UpdateAlive(id: Int) extends AliveMessage
+case class UpdateAliveLeader(id: Int) extends AliveMessage
 
 // 节点类，负责初始化和管理各个子Actor，以及处理消息
 class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
@@ -39,9 +36,9 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
 
           case Beat(nodeId) => announcePresence(nodeId)
 
-          case IsAlive(nodeId) => getPresence(nodeId)
+          case UpdateAlive(nodeId) => updatePresence(nodeId)
 
-          case IsAliveLeader(nodeId) => getLeaderPresence(nodeId)
+          case UpdateAliveLeader(nodeId) => updateLeaderPresence(nodeId)
 
           case LeaderChanged(nodeId) => handleLeaderChange(nodeId)
      }
@@ -55,22 +52,22 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      private def announcePresence(nodeId: Int): Unit = {
           displayActor ! Message(s"I am alive $nodeId")
-          broadcastToAll(IsAlive(id))
+          broadcastToAll(UpdateAlive(id))
      }
 
-     private def getPresence(nodeId: Int): Unit = {
+     private def updatePresence(nodeId: Int): Unit = {
           displayActor ! Message(s"Node $nodeId is alive")
-          checkerActor ! IsAlive(nodeId)
+          checkerActor ! UpdateAlive(nodeId)
      }
 
      private def announceLeaderPresence(nodeId: Int): Unit = {
           displayActor ! Message(s"I am alive $nodeId and I am the LEADER!")
-          broadcastToAll(IsAliveLeader(id))
+          broadcastToAll(UpdateAliveLeader(id))
      }
 
-     private def getLeaderPresence(nodeId: Int): Unit = {
+     private def updateLeaderPresence(nodeId: Int): Unit = {
           displayActor ! Message(s"The LEADER $nodeId is alive")
-          checkerActor ! IsAliveLeader(nodeId)
+          checkerActor ! UpdateAliveLeader(nodeId)
      }
 
      private def handleLeaderChange(nodeId: Int): Unit = {

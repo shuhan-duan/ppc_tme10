@@ -22,11 +22,11 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
           // 启动周期性检查
           scheduleNextCheck()
 
-     case IsAlive(nodeId) =>
+     case UpdateAlive(nodeId) =>
           // 更新节点的最后活跃时间
           nodesAlive += nodeId -> new Date
 
-     case IsAliveLeader(nodeId) =>
+     case UpdateAliveLeader(nodeId) =>
           // 更新领导者的最后活跃时间，并设置当前领导者
           nodesAlive += nodeId -> new Date
           leader = nodeId
