@@ -38,30 +38,30 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
      }
 
      private def scheduleNextCheck(): Unit = {
-     context.system.scheduler.scheduleOnce(checkInterval, self, CheckerTick)
+          context.system.scheduler.scheduleOnce(checkInterval, self, CheckerTick)
      }
 
      private def performAliveCheck(): Unit = {
-     val now = new Date
-     nodesAlive.foreach { case (nodeId, lastAlive) =>
-          // 如果节点在允许的时间内未报告活跃，则认为节点失效
-          if (now.getTime - lastAlive.getTime > deathThreshold * checkInterval.toMillis) {
-          nodesAlive -= nodeId
-          if (nodeId == leader) {
-               // 如果失效的是领导者节点，触发新的选举
-               triggerElection()
-          } else {
-               context.parent ! Message(s"Node $nodeId is dead")
+          val now = new Date
+          nodesAlive.foreach { case (nodeId, lastAlive) =>
+               // 如果节点在允许的时间内未报告活跃，则认为节点失效
+               if (now.getTime - lastAlive.getTime > deathThreshold * checkInterval.toMillis) {
+               nodesAlive -= nodeId
+               if (nodeId == leader) {
+                    // 如果失效的是领导者节点，触发新的选举
+                    triggerElection()
+               } else {
+                    context.parent ! Message(s"Node $nodeId is dead")
+               }
+               }
           }
-          }
-     }
      }
 
      private def triggerElection(): Unit = {
-     leader = -1
-     context.parent ! Message("LEADER is dead => ELECTION")
-     // 启动新的选举过程
-     electionActor ! StartElection(nodesAlive.keys.toList)
+          leader = -1
+          context.parent ! Message("LEADER is dead => ELECTION")
+          // 启动新的选举过程
+          electionActor ! StartElection(nodesAlive.keys.toList)
      }
 }
 

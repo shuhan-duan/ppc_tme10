@@ -37,16 +37,16 @@ class BeatActor(val id: Int) extends Actor {
      }
 
      private def triggerBeat(): Unit = {
-     // 根据当前节点是否为领导者，发送相应的心跳消息
-     if (id == leader) {
-          father ! BeatLeader(id)
-     } else {
-          father ! Beat(id)
-     }
+          // 根据当前节点是否为领导者，发送相应的心跳消息
+          if (id == leader) {
+               father ! BeatLeader(id)
+          } else {
+               father ! Beat(id)
+          }
      }
 
      private def scheduleNextBeat(): Unit = {
-     // 使用Akka的调度器安排下一次心跳
-     context.system.scheduler.scheduleOnce(beatInterval, self, BeatTick)
+          // 使用Akka的调度器安排下一次心跳
+          context.system.scheduler.scheduleOnce(beatInterval, self, BeatTick)
      }
 }

@@ -49,32 +49,32 @@ class ElectionActor(val id: Int, val terminals: List[Terminal]) extends Actor {
      }
 
      private def initiateElection(): Unit = {
-     nodesAlive = nodesAlive.sorted
-     println(nodesAlive)
-     val nominatorId = nodesAlive.max
-     println(nominatorId)
-     father ! Message("initiateElection")
-     broadcastElection(nominatorId)
+          nodesAlive = nodesAlive.sorted
+          println(nodesAlive)
+          val nominatorId = nodesAlive.max
+          println(nominatorId)
+          father ! Message("initiateElection")
+          broadcastElection(nominatorId)
      }
 
      private def broadcastElection(nominatorId: Int): Unit = {
-     terminals.foreach { n =>
-          if (n.id != id) {
-          val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
-          father ! Message(n.id+"broadcastElection"+nominatorId)
-          remote ! Election(nominatorId)
-          father ! Message(" after broadcastElection")
+          terminals.foreach { n =>
+               if (n.id != id) {
+               val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
+               father ! Message(n.id+"broadcastElection"+nominatorId)
+               remote ! Election(nominatorId)
+               father ! Message(" after broadcastElection")
+               }
           }
-     }
      }
 
      private def broadcastElectionResult(leader: Int): Unit = {
-     terminals.foreach { n =>
-          if (n.id != id) {
-          val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
-          father ! Message("broadcastElectionResult")
-          remote ! ElectionResult(leader)
+          terminals.foreach { n =>
+               if (n.id != id) {
+               val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
+               father ! Message("broadcastElectionResult")
+               remote ! ElectionResult(leader)
+               }
           }
-     }
      }
 }
