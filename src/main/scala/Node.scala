@@ -32,9 +32,9 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
      def receive: Receive = {
           case Message(content) => displayActor ! Message(content)
 
-          case BeatLeader(nodeId) => announceLeaderPresence(nodeId)
+          case BeatLeader => announceLeaderPresence()
 
-          case Beat(nodeId) => announcePresence(nodeId)
+          case Beat => announcePresence()
 
           case UpdateAlive(nodeId) => updatePresence(nodeId)
 
@@ -50,8 +50,8 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
           }
      }
 
-     private def announcePresence(nodeId: Int): Unit = {
-          displayActor ! Message(s"I am alive $nodeId")
+     private def announcePresence(): Unit = {
+          displayActor ! Message(s"I am alive $id")
           broadcastToAll(UpdateAlive(id))
      }
 
@@ -60,8 +60,8 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
           checkerActor ! UpdateAlive(nodeId)
      }
 
-     private def announceLeaderPresence(nodeId: Int): Unit = {
-          displayActor ! Message(s"I am alive $nodeId and I am the LEADER!")
+     private def announceLeaderPresence(): Unit = {
+          displayActor ! Message(s"I am alive $id and I am the LEADER!")
           broadcastToAll(UpdateAliveLeader(id))
      }
 

@@ -6,8 +6,8 @@ import akka.actor._
 
 // 消息类型定义
 sealed trait BeatMessage
-case class Beat(id: Int) extends BeatMessage // 普通心跳消息
-case class BeatLeader(id: Int) extends BeatMessage // 领导者心跳消息
+case object Beat extends BeatMessage // 普通心跳消息
+case object BeatLeader extends BeatMessage // 领导者心跳消息
 
 case object BeatTick // 心跳触发消息
 
@@ -39,9 +39,9 @@ class BeatActor(val id: Int) extends Actor {
      private def triggerBeat(): Unit = {
           // 根据当前节点是否为领导者，发送相应的心跳消息
           if (id == leader) {
-               father ! BeatLeader(id)
+               father ! BeatLeader
           } else {
-               father ! Beat(id)
+               father ! Beat
           }
      }
 
