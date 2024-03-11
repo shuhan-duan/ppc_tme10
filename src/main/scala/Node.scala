@@ -12,35 +12,35 @@ case class UpdateAliveLeader(id: Int) extends AliveMessage
 
 // 节点类，负责初始化和管理各个子Actor，以及处理消息
 class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
-     // 创建子Actor：选举、检查器、心跳和显示
-     val electionActor = context.actorOf(Props(new ElectionActor(id, terminals)), "electionActor")
-     val checkerActor = context.actorOf(Props(new CheckerActor(id, terminals, electionActor)), "checkerActor")
+     // 创建子Actor：选举、心跳和显示
+     val leaderElectionActor = context.actorOf(Props(new LeaderElectionActor(id, terminals)), "leaderElectionActor")
      val beatActor = context.actorOf(Props(new BeatActor(id)), "beatActor")
      val displayActor = context.actorOf(Props[DisplayActor], "displayActor")
 
-     // 在系统启动时执行的操作
-     override def preStart(): Unit = {
-          // 显示创建信息
-          displayActor ! Message(s"Node $id is created")
-          // 启动子Actor
-          checkerActor ! Start
-          beatActor ! Start
-          // 初始化与其他节点的通信路径
-          initializeRemotes()
-     }
-
      def receive: Receive = {
+          case Start => initialize()
+
           case Message(content) => displayActor ! Message(content)
 
           case BeatLeader => announceLeaderPresence()
 
           case Beat => announcePresence()
 
+          case LeaderChanged(nodeId) => handleLeaderChange(nodeId)
+
           case UpdateAlive(nodeId) => updatePresence(nodeId)
 
           case UpdateAliveLeader(nodeId) => updateLeaderPresence(nodeId)
+     }
 
-          case LeaderChanged(nodeId) => handleLeaderChange(nodeId)
+     private def initialize(): Unit = {
+          // 显示创建信息
+          displayActor ! Message(s"Node $id is created")
+          // 启动子Actor
+          beatActor ! Start
+          leaderElectionActor ! Start
+          // 初始化与其他节点的通信路径
+          initializeRemotes()
      }
 
      private def initializeRemotes(): Unit = {
@@ -55,11 +55,6 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
           broadcastToAll(UpdateAlive(id))
      }
 
-     private def updatePresence(nodeId: Int): Unit = {
-          displayActor ! Message(s"Node $nodeId is alive")
-          checkerActor ! UpdateAlive(nodeId)
-     }
-
      private def announceLeaderPresence(): Unit = {
           displayActor ! Message(s"I am alive $id and I am the LEADER!")
           broadcastToAll(UpdateAliveLeader(id))
@@ -67,7 +62,12 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      private def updateLeaderPresence(nodeId: Int): Unit = {
           displayActor ! Message(s"The LEADER $nodeId is alive")
-          checkerActor ! UpdateAliveLeader(nodeId)
+          leaderElectionActor ! UpdateAliveLeader(nodeId)
+     }
+
+     private def updatePresence(nodeId: Int): Unit = {
+          displayActor ! Message(s"Node $nodeId is alive")
+          leaderElectionActor ! UpdateAlive(nodeId)
      }
 
      private def handleLeaderChange(nodeId: Int): Unit = {

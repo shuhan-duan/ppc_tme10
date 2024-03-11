@@ -19,12 +19,10 @@ class BeatActor(val id: Int) extends Actor {
      val father = context.parent // 父Actor，用于发送消息
      var leader: Int = 0 // 初始无领导者
 
-     override def preStart(): Unit = {
-          // 初始化时触发首次心跳
-          self ! BeatTick
-     }
-
      def receive: Receive = {
+          case Start => 
+               self ! BeatTick
+
           case BeatTick =>
                // 触发心跳，然后重新安排下一次心跳
                triggerBeat()
