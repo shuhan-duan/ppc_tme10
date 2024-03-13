@@ -16,26 +16,22 @@ class ElectionActor(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      def receive = {
           case StartElection(list) => {
-               if (list.isEmpty) {
-                    this.nodesAlive = this.nodesAlive:::List(id)
-               }
-               else {
-                    this.nodesAlive = list ::: List(id)
-               }
+               nodesAlive = List(id)  // reset nodesAlive
+               leader = -1 // reset leader
+               nodesAlive = nodesAlive ++ list
                initiateElection()
           }
 
           case Election(nominatorId) =>{
-               if (this.leader < nominatorId) {
-               this.leader = nominatorId
                father ! Message(s"I choose NEW LEADER is $nominatorId.")
-               broadcastElectionResult(leader)
-               }
+               broadcastElectionResult(nominatorId)
           }
                
           case ElectionResult(newLeader) =>{
-               this.leader = newLeader
-               father ! LeaderChanged(newLeader)
+               if(leader != newLeader){
+                    leader = newLeader
+                    father ! LeaderChanged(leader)
+               } 
           }
      }
      private def initiateElection(): Unit = {
@@ -45,19 +41,28 @@ class ElectionActor(val id: Int, val terminals: List[Terminal]) extends Actor {
      }
 
      private def broadcastElection(nominatorId: Int): Unit = {
-          terminals.foreach { n =>
-               if (n.id != id) {
-               val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
-               remote ! Election(nominatorId)
+          if (nodesAlive.size == 1 && nodesAlive.head == id) {
+               self ! Election(nominatorId) // 直接发送给自己
+          } else {
+               terminals.foreach { n =>
+                    if (n.id != id) {
+                         val remote = context.actorSelection(s"akka.tcp://LeaderSystem${n.id}@${n.ip}:${n.port}/user/Node/electionActor")
+                         remote ! Election(nominatorId)
+                    }
                }
           }
      }
 
+
      private def broadcastElectionResult(leader: Int): Unit = {
-          terminals.foreach { n =>
-               if (n.id != id) {
-               val remote = context.actorSelection("akka.tcp://LeaderSystem" + n.id + "@" + n.ip + ":" + n.port + "/user/Node/electionActor")
-               remote ! ElectionResult(leader)
+          if (nodesAlive.size == 1 && nodesAlive.head == id) {
+               self ! ElectionResult(leader) 
+          } else {
+               terminals.foreach { n =>
+                    if (n.id != id) {
+                         val remote = context.actorSelection(s"akka.tcp://LeaderSystem${n.id}@${n.ip}:${n.port}/user/Node/electionActor")
+                         remote ! ElectionResult(leader)
+                    }
                }
           }
      }

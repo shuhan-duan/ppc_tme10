@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class Tick
 case class CheckerTick () extends Tick
+case class CheckOnlyLeader () extends Tick
 
 // CheckerActor用于定期检查节点的存活状态，并在检测到领导者节点失败时触发新的选举。
 class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: ActorRef) extends Actor {
@@ -15,12 +16,10 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
      var leader: Int = -1 // 当前领导者的ID
      val deathThreshold: Int = 3 // 节点被认为失效前的检查次数
 
-     override def preStart(): Unit = self ! CheckerTick
-
      def receive: Receive = {
      case Start =>
-          // 启动周期性检查
-          scheduleNextCheck()
+          self ! CheckerTick
+          context.system.scheduler.scheduleOnce(30.seconds, self, CheckOnlyLeader)
 
      case UpdateAlive(nodeId) =>
           // 更新节点的最后活跃时间
@@ -35,8 +34,16 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
           // 执行存活检查，并计划下一次检查
           performAliveCheck()
           scheduleNextCheck()
-     }
+     
 
+     case CheckOnlyLeader =>
+          if (nodesAlive.size == 1 && nodesAlive.keys.head == id) {
+          // 如果30秒后，只有自己（假设为初始领导者）是活跃的，结束系统
+          context.system.terminate()
+          }
+
+     }
+     
      private def scheduleNextCheck(): Unit = {
           context.system.scheduler.scheduleOnce(checkInterval, self, CheckerTick)
      }

@@ -18,18 +18,9 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
      val beatActor = context.actorOf(Props(new BeatActor(id)), "beatActor")
      val displayActor = context.actorOf(Props[DisplayActor], "displayActor")
 
-     // 在系统启动时执行的操作
-     override def preStart(): Unit = {
-          // 显示创建信息
-          displayActor ! Message(s"Node $id is created")
-          // 启动子Actor
-          checkerActor ! Start
-          beatActor ! Start
-          // 初始化与其他节点的通信路径
-          initializeRemotes()
-     }
-
      def receive: Receive = {
+          case Start => initialize()
+
           case Message(content) => displayActor ! Message(content)
 
           case BeatLeader => announceLeaderPresence()
@@ -41,6 +32,16 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
           case UpdateAliveLeader(nodeId) => updateLeaderPresence(nodeId)
 
           case LeaderChanged(nodeId) => handleLeaderChange(nodeId)
+     }
+
+     private def initialize(): Unit = {
+          // 显示创建信息
+          displayActor ! Message(s"Node $id is created")
+          // 启动子Actor
+          checkerActor ! Start
+          beatActor ! Start
+          // 初始化与其他节点的通信路径
+          initializeRemotes()
      }
 
      private def initializeRemotes(): Unit = {
