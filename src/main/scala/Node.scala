@@ -22,6 +22,11 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
      val beatActor = context.actorOf(Props(new BeatActor(id)), "beatActor")
      val displayActor = context.actorOf(Props[DisplayActor], "displayActor")
 
+     val dataBaseActor = system.actorOf(Props[DataBaseActor], "dataBaseActor")
+     val playerActor = system.actorOf(Props[PlayerActor], "playerActor")
+     val providerActor = system.actorOf(Props(new Provider(dataBaseActor)), "providerActor")
+     val conductorActor = system.actorOf(Props(new Conductor(providerActor, playerActor ,terminals)), "conductorActor")
+
      var leader: Int = -1
 
      def receive: Receive = {
@@ -78,6 +83,7 @@ class Node(val id: Int, val terminals: List[Terminal]) extends Actor {
           displayActor ! Message(s"I am alive $id and I am the LEADER!")
           broadcastToAll(UpdateAliveLeader(id))
           checkerActor ! UpdateAliveLeader(id)
+          conductorActor ! StartConcert
      }
 
      private def updateLeaderPresence(nodeId: Int): Unit = {

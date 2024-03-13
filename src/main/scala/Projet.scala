@@ -37,3 +37,22 @@ object Projet {
      }
 
 }
+// package upmc.akka.ppc
+
+// import akka.actor.{Props, Actor, ActorRef, ActorSystem}
+
+// object Concert extends App {
+//   println("Starting Mozart's game...")
+
+//   val system = ActorSystem("MozartsGameSystem")
+
+//   val dataBaseActor = system.actorOf(Props[DataBaseActor], "dataBaseActor")
+
+//   val playerActor = system.actorOf(Props[PlayerActor], "playerActor")
+
+//   val providerActor = system.actorOf(Props(new Provider(dataBaseActor)), "providerActor")
+
+//   val conductorActor = system.actorOf(Props(new Conductor(providerActor, playerActor)), "conductorActor")
+
+//   conductorActor ! StartGame
+// }

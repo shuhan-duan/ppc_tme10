@@ -62,7 +62,7 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
                }
           }
           if (nodesAlive.size == 1 && nodesAlive.keys.head == id && terminationTask.isEmpty) {
-               terminationTask = Some(context.system.scheduler.scheduleOnce(15.seconds) {
+               terminationTask = Some(context.system.scheduler.scheduleOnce(30.seconds) {
                     if (nodesAlive.size == 1 && nodesAlive.keys.head == id) {
                          println("Terminating system.")
                          context.system.terminate()
