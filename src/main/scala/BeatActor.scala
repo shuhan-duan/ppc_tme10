@@ -11,7 +11,7 @@ case object BeatLeader extends BeatMessage // 领导者心跳消息
 
 case object BeatTick // 心跳触发消息
 
-case class LeaderChanged(nodeId: Int) // 领导者变更消息，直接使用Int
+case class LeaderChanged(musicianId: Int) // 领导者变更消息，直接使用Int
 
 // 心跳Actor负责定时发送心跳消息，并在领导者变更时更新状态。
 class BeatActor(val id: Int) extends Actor {
@@ -27,9 +27,9 @@ class BeatActor(val id: Int) extends Actor {
                triggerBeat()
                scheduleNextBeat()
 
-          case LeaderChanged(nodeId) =>
+          case LeaderChanged(musicianId) =>
                // 更新当前的领导者ID，并通知父Actor
-               leader = nodeId
+               leader = musicianId
      }
 
      private def triggerBeat(): Unit = {

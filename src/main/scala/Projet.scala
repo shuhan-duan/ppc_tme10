@@ -7,14 +7,7 @@ case class Terminal (id:Int, ip:String, port:Int)
 
 object Projet {
 
-     // Permet de communiquer avec les autres nodes
-     val config = List (
-          Terminal (0, "127.0.0.1", 6000),
-          Terminal (1, "127.0.0.1", 6001),
-          Terminal (2, "127.0.0.1", 6002),
-          Terminal (3, "127.0.0.1", 6003)
-     )
-
+   
      def main (args : Array[String]) {
           // Gestion des erreurs
           if (args.size != 1) {
@@ -25,34 +18,27 @@ object Projet {
           val id : Int = args(0).toInt
 
           if (id < 0 || id > 3) {
-               println ("Errur : <num> doit etre compris entre 0 et 3")
+               println ("Erreur : <num> doit etre compris entre 0 et 3")
                sys.exit(1)
           }
 
-          // Initialisation du node <id>
-          val system = ActorSystem("LeaderSystem" + id, ConfigFactory.load().getConfig("system" + id))
-          val node = system.actorOf(Props(new Node(id, config)), "Node")
+          var musicienlist = List[Terminal]()
+          
+          // recuperation des adresses de tous les musiciens
+          // hardcoded path name
+          for(i <- 3 to 0 by -1){
+               val address = ConfigFactory.load().getConfig("system"+ i).getValue("akka.remote.netty.tcp.hostname").render()
+               val port = ConfigFactory.load().getConfig("system"+ i).getValue("akka.remote.netty.tcp.port").render()
+               musicienlist = Terminal(i, address, port.toInt)::musicienlist
+          }
 
-          node ! Start
+          println(musicienlist)
+
+          // Initialisation du musician <id>
+          val system = ActorSystem("MozartSystem" + id, ConfigFactory.load().getConfig("system" + id))
+          val musicien = system.actorOf(Props(new Musician(id, musicienlist)), "Musician"+id)
+
+          musicien ! Start
      }
 
 }
-// package upmc.akka.ppc
-
-// import akka.actor.{Props, Actor, ActorRef, ActorSystem}
-
-// object Concert extends App {
-//   println("Starting Mozart's game...")
-
-//   val system = ActorSystem("MozartsGameSystem")
-
-//   val dataBaseActor = system.actorOf(Props[DataBaseActor], "dataBaseActor")
-
-//   val playerActor = system.actorOf(Props[PlayerActor], "playerActor")
-
-//   val providerActor = system.actorOf(Props(new Provider(dataBaseActor)), "providerActor")
-
-//   val conductorActor = system.actorOf(Props(new Conductor(providerActor, playerActor)), "conductorActor")
-
-//   conductorActor ! StartGame
-// }

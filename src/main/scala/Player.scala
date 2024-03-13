@@ -1,5 +1,5 @@
 
-package upmc.akka.ppc
+package upmc.akka.leader
 
 import math._
 
@@ -51,6 +51,7 @@ class PlayerActor() extends Actor {
 
   def receive = {
     case measure: Measure => {
+      context.parent ! Message(s"I am playing")
       measure.chords.foreach {
         chord => {
           chord.notes.foreach { note =>

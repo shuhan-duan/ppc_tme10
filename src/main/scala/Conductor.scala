@@ -1,13 +1,14 @@
-package upmc.akka.ppc
+package upmc.akka.leader
 
 import akka.actor.{Actor, ActorRef, Props}
 import scala.concurrent.duration._
-
+import upmc.akka.leader.DataBaseActor.Measure
 case object StartConcert
 
 case class GetMeasureResult(result: Int)
+case class SendFromConductor(measure: Measure)
 
-class Conductor(provider: ActorRef, player: ActorRef , val terminals: List[Terminal]) extends Actor {
+class Conductor(provider: ActorRef, player: ActorRef) extends Actor {
 
     import context.dispatcher
     import DataBaseActor._
@@ -18,15 +19,14 @@ class Conductor(provider: ActorRef, player: ActorRef , val terminals: List[Termi
         provider ! GetMeasureResult(result)
 
       case measure: Measure =>
-      //to modifie  choose a player in nodesalive 
-        player ! measure
+        context.parent ! SendFromConductor(measure)
         context.system.scheduler.scheduleOnce(1800.milliseconds, self, StartConcert)
     }
 
 
     private def throwDice(): Int = {
-            val die1 = scala.util.Random.nextInt(6) + 1
-            val die2 = scala.util.Random.nextInt(6) + 1
-            die1 + die2
+      val die1 = scala.util.Random.nextInt(6) + 1
+      val die2 = scala.util.Random.nextInt(6) + 1
+      die1 + die2
     }
 }
