@@ -2,8 +2,7 @@ package upmc.akka.leader
 
 import akka.actor._
 
-
-// 定义用于选举过程的消息
+// Define messages for the election process
 sealed trait ElectionMessage
 case class StartElection(musicians: List[Int]) extends ElectionMessage
 case class Election(id: Int) extends ElectionMessage
@@ -12,7 +11,7 @@ case class ElectionResult(newLeader: Int) extends ElectionMessage
 class ElectionActor(val id: Int, val terminals: List[Terminal]) extends Actor {
      val father = context.parent
      var musiciansAlive: List[Int] = List(id)
-     var leader: Int = -1 // 默认没有领导者
+     var leader: Int = -1 // Default no leader
 
      def receive = {
           case StartElection(list) => {
@@ -41,7 +40,7 @@ class ElectionActor(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      private def broadcastElectionMessage(message: ElectionMessage): Unit = {
           if (musiciansAlive.size == 1 && musiciansAlive.head == id) {
-               self ! message // 直接发送给自己
+               self ! message // Send directly to self
           } else {
                terminals.foreach { n =>
                     if (n.id != id) {

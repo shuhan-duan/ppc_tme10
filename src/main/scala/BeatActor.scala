@@ -4,36 +4,36 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import akka.actor._
 
-// 消息类型定义
+// Message types definition
 sealed trait BeatMessage
-case object Beat extends BeatMessage // 普通心跳消息
-case object BeatLeader extends BeatMessage // 领导者心跳消息
+case object Beat extends BeatMessage // Regular heartbeat message
+case object BeatLeader extends BeatMessage // Leader heartbeat message
 
-case object BeatTick // 心跳触发消息
+case object BeatTick // Heartbeat trigger message
 
-case class LeaderChanged(musicianId: Int) // 领导者变更消息，直接使用Int
+case class LeaderChanged(musicianId: Int) // Leader change message, using Int directly
 
-// 心跳Actor负责定时发送心跳消息，并在领导者变更时更新状态。
+// The BeatActor is responsible for sending heartbeat messages periodically and updating the state when the leader changes.
 class BeatActor(val id: Int) extends Actor {
-     val beatInterval: FiniteDuration = 500.milliseconds // 定义心跳间隔
-     val father = context.parent // 父Actor，用于发送消息
+     val beatInterval: FiniteDuration = 500.milliseconds // Define the heartbeat interval
+     val father = context.parent // Parent Actor used for sending messages
      var leader: Int = -1
 
      def receive: Receive = {
           case Start => self ! BeatTick
 
           case BeatTick =>
-               // 触发心跳，然后重新安排下一次心跳
+               // Trigger heartbeat and schedule the next heartbeat
                triggerBeat()
                scheduleNextBeat()
 
           case LeaderChanged(musicianId) =>
-               // 更新当前的领导者ID，并通知父Actor
+               // Update the current leader ID and notify the parent Actor
                leader = musicianId
      }
 
      private def triggerBeat(): Unit = {
-          // 根据当前节点是否为领导者，发送相应的心跳消息
+          // Send the corresponding heartbeat message based on whether the current is the leader
           if (id == leader) {
                father ! BeatLeader
           } else {
@@ -42,7 +42,7 @@ class BeatActor(val id: Int) extends Actor {
      }
 
      private def scheduleNextBeat(): Unit = {
-          // 使用Akka的调度器安排下一次心跳
+          // Use Akka's scheduler to schedule the next heartbeat
           context.system.scheduler.scheduleOnce(beatInterval, self, BeatTick)
      }
 }

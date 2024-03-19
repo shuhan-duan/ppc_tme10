@@ -8,12 +8,12 @@ import scala.concurrent.ExecutionContext.Implicits.global
 abstract class Tick
 case class CheckerTick () extends Tick
 
-// CheckerActor用于定期检查节点的存活状态，并在检测到领导者节点失败时触发新的选举。
+// CheckerActor is used to periodically check the liveness status of nodes and trigger a new election when a leader node failure is detected.
 class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: ActorRef) extends Actor {
-     val checkInterval: FiniteDuration = 500.milliseconds // 检查间隔
-     var musiciansAlive: Map[Int, Date] = Map() // 存储节点及其最后一次活跃时间
-     var leader: Int = -1 // 当前领导者的ID
-     val deathThreshold: Int = 3 // 节点被认为失效前的检查次数
+     val checkInterval: FiniteDuration = 500.milliseconds // interval for checking
+     var musiciansAlive: Map[Int, Date] = Map() // stores nodes and their last active time
+     var leader: Int = -1 // ID of the current leader
+     val deathThreshold: Int = 3 // number of checks before a node is considered failed
      var terminationTask: Option[Cancellable] = None
 
      def receive: Receive = {
@@ -21,7 +21,7 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
                self ! CheckerTick
 
           case UpdateAlive(musicianId) =>
-               // 更新节点的最后活跃时间
+               // update the last active time of the node
                musiciansAlive += musicianId -> new Date
                if (musicianId != id && terminationTask.isDefined) {
                     terminationTask.foreach(_.cancel())
@@ -29,7 +29,7 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
                }
 
           case UpdateAliveLeader(musicianId) =>
-               // 更新领导者的最后活跃时间，并设置当前领导者
+               // update the last active time of the leader and set the current leader
                musiciansAlive += musicianId -> new Date
                leader = musicianId
                if (musicianId != id && terminationTask.isDefined) {
@@ -38,7 +38,7 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
                }
 
           case CheckerTick =>
-               // 执行存活检查，并计划下一次检查
+               // perform liveness check and schedule the next check
                performAliveCheck()
                scheduleNextCheck()
      }
@@ -50,14 +50,14 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
      private def performAliveCheck(): Unit = {
           val now = new Date
           musiciansAlive.foreach { case (musicianId, lastAlive) =>
-               // 如果节点在允许的时间内未报告活跃，则认为节点失效
+               // if a node has not reported activity within the allowed time, consider it is left
                if (now.getTime - lastAlive.getTime > deathThreshold * checkInterval.toMillis) {
                     musiciansAlive -= musicianId
                if (musicianId == leader) {
-                    // 如果失效的是领导者节点，触发新的选举
+                    // if the failed node is the leader, trigger a new election
                     triggerElection()
                } else {
-                    context.parent ! Message(s"Musician $musicianId has quited")
+                    context.parent ! Message(s"Musician $musicianId has quit")
                }
                }
           }
@@ -74,9 +74,8 @@ class CheckerActor(val id: Int, val terminals: List[Terminal], electionActor: Ac
 
      private def triggerElection(): Unit = {
           leader = -1
-          context.parent ! Message("LEADER has quited => ELECTION")
-          // 启动新的选举过程
+          context.parent ! Message("LEADER has quit => ELECTION")
+          // start a new election process
           electionActor ! StartElection(musiciansAlive.keys.toList)
      }
 }
-

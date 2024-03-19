@@ -6,10 +6,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import scala.util.Random
 import upmc.akka.leader.DataBaseActor.Measure
-// 启动消息
+
+// Start message
 case object Start
 
-// 存活消息类型
+// Alive message types
 sealed trait AliveMessage
 case class UpdateAlive(id: Int) extends AliveMessage
 case class UpdateAliveLeader(id: Int) extends AliveMessage
@@ -17,9 +18,9 @@ case class UpdateNodesAlives(musicians: List[Int]) extends AliveMessage
 
 case object DeclareLeader
 
-// 节点类，负责初始化和管理各个子Actor，以及处理消息
+// Node class, responsible for initializing and managing various child actors, as well as handling messages
 class Musician(val id: Int, val terminals: List[Terminal]) extends Actor {
-     // 创建子Actor：选举、检查器、心跳和显示
+     // Create child actors: election, checker, beat, and display
      val electionActor = context.actorOf(Props(new ElectionActor(id, terminals)), "electionActor")
      val checkerActor = context.actorOf(Props(new CheckerActor(id, terminals, electionActor)), "checkerActor")
      val beatActor = context.actorOf(Props(new BeatActor(id)), "beatActor")
@@ -59,9 +60,9 @@ class Musician(val id: Int, val terminals: List[Terminal]) extends Actor {
      }
 
      private def initialize(): Unit = {
-          // 显示创建信息
+          // Display creation message
           displayActor ! Message(s"Musician $id is created")
-          // 启动子Actor
+          // Start child actors
           checkerActor ! Start
           beatActor ! Start
           context.system.scheduler.scheduleOnce(4.seconds, self, DeclareLeader)(context.dispatcher)
@@ -125,7 +126,7 @@ class Musician(val id: Int, val terminals: List[Terminal]) extends Actor {
 
      private def sendToPlayer(measure: Measure): Unit = {
           if (musiciansAlive.nonEmpty) {
-               // 从musiciansAlive里随机选一个
+               // Select a random musician from musiciansAlive
                val playerId = musiciansAlive(Random.nextInt(musiciansAlive.size))
                displayActor ! Message(s"I choose Musician $id to play")
                val terminal = terminals.find(_.id == playerId).getOrElse(throw new IllegalArgumentException(s"Terminal with id $playerId not found"))
